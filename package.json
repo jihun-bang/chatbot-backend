@@ -4,11 +4,13 @@
   "description": "skmagic chatbot",
   "main": "lib/index.js",
   "scripts": {
-    "build": "npx tsc",
-    "start": "npm run build && node lib/app.js"
+    "gcp-build": "tsc",
+    "start": "node lib/app.js",
+    "deploy": "gcloud app deploy",
+    "dev": "npm run gcp-build && npm run start"
   },
   "engines": {
-    "node": "18"
+    "node": "16"
   },
   "author": "",
   "license": "ISC",
