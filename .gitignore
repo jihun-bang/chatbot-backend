@@ -91,3 +91,4 @@ lib
 .idea
 dist
 db
+*.lock
