@@ -1,18 +1,32 @@
 {
+  "extends": "@tsconfig/recommended",
   "compilerOptions": {
-    "module": "commonjs",
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "outDir": "lib",
+    "outDir": "dist",
+    "lib": [
+      "ES2021",
+      "ES2022.Object",
+      "DOM"
+    ],
+    "target": "ES2021",
+    "module": "nodenext",
     "sourceMap": true,
-    "strict": true,
-    "target": "es2017",
     "allowSyntheticDefaultImports": true,
+    "baseUrl": "./src",
+    "declaration": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedParameters": true,
+    "useDefineForClassFields": true,
+    "strictPropertyInitialization": false,
     "resolveJsonModule": true,
-    "esModuleInterop": true
+    "esModuleInterop":true
   },
-  "compileOnSave": true,
+  "exclude": [
+    "node_modules/",
+    "dist/",
+    "tests/"
+  ],
   "include": [
-    "src"
+    "./src"
   ]
 }

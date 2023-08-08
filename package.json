@@ -1,27 +1,47 @@
 {
-  "name": "skmagic-chatbot-backend",
-  "version": "1.0.0",
-  "description": "skmagic chatbot",
-  "main": "lib/index.js",
+  "name": "examples",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Langchain examples",
+  "main": "./dist/index.js",
+  "type": "module",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
-    "gcp-build": "tsc",
-    "start": "node lib/app.js",
+    "gcp-build": "tsc --declaration --outDir dist/",
+    "start": "yarn gcp-build && node dist/app.js",
+    "build": "tsc --declaration --outDir dist/",
     "deploy": "gcloud app deploy",
-    "dev": "npm run gcp-build && npm run start"
-  },
-  "engines": {
-    "node": "16"
+    "lint": "eslint src",
+    "lint:fix": "yarn lint --fix",
+    "precommit": "lint-staged",
+    "format": "prettier --write \"**/*.ts\"",
+    "format:check": "prettier --check \"**/*.ts\""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2"
+    "@types/node": "^20.4.8",
+    "express": "^4.18.2",
+    "faiss-node": "^0.2.1",
+    "firebase-admin": "^11.10.1",
+    "langchain": "^0.0.124",
+    "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
-    "@types/express": "^4.17.17",
-    "@types/node": "^20.4.7",
-    "concurrently": "^8.2.0",
-    "nodemon": "^3.0.1",
-    "typescript": "^5.1.6"
+    "@tsconfig/recommended": "^1.0.2",
+    "@types/js-yaml": "^4",
+    "@typescript-eslint/eslint-plugin": "^6.3.0",
+    "@typescript-eslint/parser": "^6.3.0",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.33.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-prettier": "^5.0.0",
+    "prettier": "^3.0.1",
+    "tsx": "^3.12.3",
+    "typescript": "^5.0.0"
   }
 }
