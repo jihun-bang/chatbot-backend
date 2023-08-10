@@ -32,7 +32,7 @@ app.post('/api/chat', async (req, res) => {
     try {
         const {question} = req.body;
         if (!question) {
-            res.status(400).json({message: '질문이 없습니다.'});
+            res.status(400).json({message: '질문 해주세요!'});
         }
         const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
         console.log(`[question] ${question}`)
@@ -48,23 +48,10 @@ app.post('/api/chat', async (req, res) => {
 });
 
 app.listen(port, async () => {
-    // const loader = new PDFLoader("src/manual/WPU-A1100C_230626.pdf");
-    // const docs = await loader.load();
-    // const splitter = new RecursiveCharacterTextSplitter({
-    //     chunkSize: 1000,
-    //     chunkOverlap: 0,
-    // });
-    // const docOutput = await splitter.splitDocuments(docs);
-    // const vectorStore = await FaissStore.fromDocuments(
-    //     docOutput,
-    //     new OpenAIEmbeddings()
-    // );
-    // await vectorStore.save(directory);
     const loadedVectorStore = await FaissStore.load(
         directory,
         new OpenAIEmbeddings()
     );
-
     chain = await makeChain(loadedVectorStore);
     console.log(`[server]: Server is running at http://localhost:${port}`);
 });

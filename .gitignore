@@ -92,3 +92,4 @@ lib
 dist
 db
 *.lock
+docs

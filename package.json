@@ -14,6 +14,7 @@
     "dev": "yarn gcp-build && node dist/app.js",
     "build": "tsc --declaration --outDir dist/",
     "deploy": "gcloud app deploy",
+    "ingest": "tsx -r dotenv/config src/scripts/ingestData.ts",
     "lint": "eslint src",
     "lint:fix": "yarn lint --fix",
     "precommit": "lint-staged",
