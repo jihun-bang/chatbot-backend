@@ -1,21 +1,19 @@
-import express, {Express, Request, Response} from 'express';
+import express from 'express';
 import * as serviceAccount from "./service_account_key.json" assert {type: 'json'};
 import admin from "firebase-admin";
-import {BufferMemory} from "langchain/memory";
-import {FirestoreChatMessageHistory} from "langchain/stores/message/firestore";
-import {ChatOpenAI} from "langchain/chat_models/openai";
 import {ConversationalRetrievalQAChain} from "langchain/chains";
 import dotenv from "dotenv"
 import {FaissStore} from "langchain/vectorstores/faiss";
 import {OpenAIEmbeddings} from "langchain/embeddings/openai";
-import {PDFLoader} from "langchain/document_loaders/fs/pdf";
-import {CharacterTextSplitter} from "langchain/text_splitter";
-import {PromptTemplate} from "langchain/prompts";
+import {makeChain} from "./chain.js";
 
-const directory = "db";
-const app: Express = express();
-const port = 8080;
 let chain: ConversationalRetrievalQAChain;
+const directory = "db";
+const port = 8080;
+
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded());
 
 dotenv.config();
 admin.initializeApp({
@@ -26,24 +24,35 @@ admin.initializeApp({
     }),
 });
 
-app.get('/', (_, res: Response) => {
+app.get('/', (_, res) => {
     res.send('Typescript + Node.js + Express Server');
 });
 
-app.get('/chat', async (req: Request, res: Response) => {
-    const question = req.query.question;
-    console.log(`[question] ${question}`)
-    const answer = await chain.call({question: question});
-    console.log(`[answer] ${answer.text}`)
-    res.send(answer);
+app.post('/api/chat', async (req, res) => {
+    try {
+        const {question} = req.body;
+        if (!question) {
+            res.status(400).json({message: '질문이 없습니다.'});
+        }
+        const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
+        console.log(`[question] ${question}`)
+        const response = await chain.call({question: sanitizedQuestion});
+        console.log('[response]', response);
+        res.status(200).json(response);
+    } catch (e) {
+        res.status(400).json({
+            message: '잘못된 형식으로 요청하였습니다.',
+            error: `${e}`
+        });
+    }
 });
 
 app.listen(port, async () => {
     // const loader = new PDFLoader("src/manual/WPU-A1100C_230626.pdf");
     // const docs = await loader.load();
-    // const splitter = new CharacterTextSplitter({
+    // const splitter = new RecursiveCharacterTextSplitter({
     //     chunkSize: 1000,
-    //     chunkOverlap: 10,
+    //     chunkOverlap: 0,
     // });
     // const docOutput = await splitter.splitDocuments(docs);
     // const vectorStore = await FaissStore.fromDocuments(
@@ -55,56 +64,7 @@ app.listen(port, async () => {
         directory,
         new OpenAIEmbeddings()
     );
-    const vectorStoreRetriever = loadedVectorStore.asRetriever({
-            searchKwargs: {fetchK: 6}
-        }
-    );
 
-    const memory = new BufferMemory(
-        {
-            memoryKey: "chat_history",
-            chatHistory: new FirestoreChatMessageHistory({
-                collectionName: "langchain",
-                sessionId: "lc-example",
-                userId: "a@example.com",
-                config: {
-                    projectId:
-                        "skmagic-chatbot-develop",
-                },
-            }),
-        });
-
-    const model = new ChatOpenAI({
-        modelName: "gpt-3.5-turbo-16k-0613",
-        openAIApiKey: process.env.OPENAI_API_KEY,
-        temperature: 0.7,
-    });
-
-    const promptTemplate = `
-    You are '매직', an AI of SK매직 that solves customers' questions.
-    Use the following pieces of context to answer the question at the end.
-    If you have a question you don't know, don't make it up and direct it to the customer center at 1600-1661.
-    Answer in Korean and with respect.
-    If you have a question you don't know, don't make it up and direct it to the customer center at 1600-1661.
-    Please respond in a soft, friendly tone, as if you were speaking to a customer service representative.
-    Use emoticons if you need them.
-    
-    {context}
-    
-    Question: {question}
-    Answer in Korean:`;
-    const prompt = PromptTemplate.fromTemplate(promptTemplate)
-
-    chain = ConversationalRetrievalQAChain.fromLLM(
-        model,
-        vectorStoreRetriever,
-        {
-            memory: memory,
-            qaChainOptions: {
-                type: "stuff",
-                prompt: prompt,
-            }
-        }
-    );
+    chain = await makeChain(loadedVectorStore);
     console.log(`[server]: Server is running at http://localhost:${port}`);
 });
