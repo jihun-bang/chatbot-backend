@@ -33,8 +33,10 @@ app.post('/api/chat', async (req, res) => {
         const {question, session_id, user_id} = req.body;
         if (!question) {
             res.status(400).json({message: '질문 해주세요!'});
+            return
         } else if (!session_id || !user_id) {
             res.status(400).json({message: '잘못된 형식으로 요청하였습니다.'});
+            return
         }
         const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
         console.log(`[question] ${question}`)

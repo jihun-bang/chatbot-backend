@@ -3,6 +3,7 @@ import {ConversationalRetrievalQAChain} from 'langchain/chains';
 import {ConversationSummaryMemory} from "langchain/memory";
 import {FirestoreChatMessageHistory} from "langchain/stores/message/firestore";
 import {ChatOpenAI} from "langchain/chat_models";
+import * as process from "process";
 
 const CONDENSE_PROMPT = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
 
@@ -23,12 +24,12 @@ Use emoticons if you need them.
 Question: {question}
 Helpful answer in Korean:`;
 
-// 모델 생성
-const model = new ChatOpenAI({
-    temperature: 0.6,
-    modelName: 'gpt-3.5-turbo-0613',
-});
 export const makeChain = async (vectorStore: FaissStore, sessionId: string, userId: string) => {
+    // 모델 생성
+    const model = new ChatOpenAI({
+        temperature: 0.6,
+        modelName: 'gpt-3.5-turbo-0613',
+    });
     // Firebase Store 기록 및 내역 조회
     const firestoreHistory = new FirestoreChatMessageHistory({
         collectionName: "chat_history",
@@ -39,7 +40,6 @@ export const makeChain = async (vectorStore: FaissStore, sessionId: string, user
                 "skmagic-chatbot-develop",
         },
     });
-
     /// 채팅 내역 요약 및 메모리 처리
     const bufferMemory = new ConversationSummaryMemory(
         {
@@ -47,7 +47,6 @@ export const makeChain = async (vectorStore: FaissStore, sessionId: string, user
             llm: model,
             chatHistory: firestoreHistory,
         });
-
     /// Chain 생성
     return ConversationalRetrievalQAChain.fromLLM(
         model,
