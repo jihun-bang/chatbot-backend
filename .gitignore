@@ -93,3 +93,4 @@ dist
 db
 *.lock
 docs
+src/service_account_key.json
