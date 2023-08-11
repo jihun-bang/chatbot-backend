@@ -23,18 +23,17 @@ Use emoticons if you need them.
 Question: {question}
 Helpful answer in Korean:`;
 
-export const makeChain = async (vectorStore: FaissStore) => {
-    // 모델 생성
-    const model = new ChatOpenAI({
-        temperature: 0.6,
-        modelName: 'gpt-3.5-turbo-0613',
-    });
-
+// 모델 생성
+const model = new ChatOpenAI({
+    temperature: 0.6,
+    modelName: 'gpt-3.5-turbo-0613',
+});
+export const makeChain = async (vectorStore: FaissStore, sessionId: string, userId: string) => {
     // Firebase Store 기록 및 내역 조회
     const firestoreHistory = new FirestoreChatMessageHistory({
-        collectionName: "langchain",
-        sessionId: "lc-example",
-        userId: "a@example.com",
+        collectionName: "chat_history",
+        sessionId: sessionId,
+        userId: userId,
         config: {
             projectId:
                 "skmagic-chatbot-develop",

@@ -7,7 +7,7 @@ import {FaissStore} from "langchain/vectorstores/faiss";
 import {OpenAIEmbeddings} from "langchain/embeddings/openai";
 import {makeChain} from "./chain.js";
 
-let chain: ConversationalRetrievalQAChain;
+let loadedVectorStore: FaissStore;
 const directory = "db";
 const port = 8080;
 
@@ -30,12 +30,15 @@ app.get('/', (_, res) => {
 
 app.post('/api/chat', async (req, res) => {
     try {
-        const {question} = req.body;
+        const {question, session_id, user_id} = req.body;
         if (!question) {
             res.status(400).json({message: '질문 해주세요!'});
+        } else if (!session_id || !user_id) {
+            res.status(400).json({message: '잘못된 형식으로 요청하였습니다.'});
         }
         const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
         console.log(`[question] ${question}`)
+        const chain = await makeChain(loadedVectorStore, session_id, user_id);
         const response = await chain.call({question: sanitizedQuestion});
         console.log('[response]', response);
         res.status(200).json(response);
@@ -48,10 +51,9 @@ app.post('/api/chat', async (req, res) => {
 });
 
 app.listen(port, async () => {
-    const loadedVectorStore = await FaissStore.load(
+    loadedVectorStore = await FaissStore.load(
         directory,
         new OpenAIEmbeddings()
     );
-    chain = await makeChain(loadedVectorStore);
     console.log(`[server]: Server is running at http://localhost:${port}`);
 });
