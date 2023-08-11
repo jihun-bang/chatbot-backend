@@ -1,1 +1,2 @@
-# skmagic-chatbot-backend
+# LLM Chatbot
+Langchain + OpenAI + Node.js + Express + TypeScript
