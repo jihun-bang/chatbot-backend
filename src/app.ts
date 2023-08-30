@@ -40,7 +40,7 @@ app.post('/api/chat', async (req, res) => {
         }
         const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
         console.log(`[question] ${question}`)
-        const chain = await makeAgentChain(loadedVectorStore, session_id, user_id);
+        const chain = await makeChain(loadedVectorStore, session_id, user_id);
         const response = await chain.call({question: sanitizedQuestion});
         console.log('[response]', response);
         res.status(200).json(response);
@@ -53,27 +53,41 @@ app.post('/api/chat', async (req, res) => {
 });
 
 app.post('/api/agent', async (req, res) => {
-    try {
-        const {question, session_id, user_id} = req.body;
-        if (!question) {
-            res.status(400).json({message: '질문 해주세요!'});
-            return
-        } else if (!session_id || !user_id) {
-            res.status(400).json({message: '잘못된 형식으로 요청하였습니다.'});
-            return
-        }
-        const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
-        console.log(`[question] ${question}`)
-        const chain = await makeChain(loadedVectorStore, session_id, user_id);
-        const response = await chain.call({question: sanitizedQuestion});
-        console.log('[response]', response);
-        res.status(200).json(response);
-    } catch (e) {
-        res.status(400).json({
-            message: '잘못된 형식으로 요청하였습니다.',
-            error: `${e}`
-        });
+    const {question, session_id, user_id} = req.body;
+    if (!question) {
+        res.status(400).json({message: '질문 해주세요!'});
+        return
+    } else if (!session_id || !user_id) {
+        res.status(400).json({message: '잘못된 형식으로 요청하였습니다.'});
+        return
     }
+    const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
+    console.log(`[question] ${question}`)
+    const chain = await makeAgentChain(loadedVectorStore, session_id, user_id);
+    const response = await chain.call({input: sanitizedQuestion});
+    console.log('[response]', response);
+    res.status(200).json(response);
+    // try {
+    //     const {question, session_id, user_id} = req.body;
+    //     if (!question) {
+    //         res.status(400).json({message: '질문 해주세요!'});
+    //         return
+    //     } else if (!session_id || !user_id) {
+    //         res.status(400).json({message: '잘못된 형식으로 요청하였습니다.'});
+    //         return
+    //     }
+    //     const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
+    //     console.log(`[question] ${question}`)
+    //     const chain = await makeAgentChain(loadedVectorStore, session_id, user_id);
+    //     const response = await chain.call({input: sanitizedQuestion});
+    //     console.log('[response]', response);
+    //     res.status(200).json(response);
+    // } catch (e) {
+    //     res.status(400).json({
+    //         message: '잘못된 형식으로 요청하였습니다.',
+    //         error: `${e}`
+    //     });
+    // }
 });
 
 

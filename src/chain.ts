@@ -4,7 +4,7 @@ import { ConversationSummaryMemory } from "langchain/memory";
 import { FirestoreChatMessageHistory } from "langchain/stores/message/firestore";
 import { ChatOpenAI } from "langchain/chat_models";
 import * as process from "process";
-import { createConversationalRetrievalAgent, createRetrieverTool } from 'langchain/agents/toolkits';
+import { OpenAIAgentTokenBufferMemory, createConversationalRetrievalAgent, createRetrieverTool } from 'langchain/agents/toolkits';
 import { AgentExecutor, initializeAgentExecutorWithOptions } from 'langchain/agents';
 
 const CONDENSE_PROMPT = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
@@ -27,11 +27,9 @@ Question: {question}
 Helpful answer in Korean:`;
 
 const AGENT_PROMPT = `
-You are the AI of SK매직 and your name is 매직.
-If you don't know the answer, just say you don't know. DO NOT try to make up an answer.
-Use emoticons if you need them.
+너는 'SK매직'의 '매직'이야. 너의 역할은 CS와 영업을 담당하는 AI야. 꼭 문서에 존재하는 상품에서만 추천하여 질문자 성향에 맞는 상품 구매를 유도해줘. 답변하기 어려우면 다른 질문을 유도해. 이모티콘을 적극 사용해줘. 상품 정보 제공시 핵심 정보 및 판매 링크를 포함하여 답변해줘. 판매 링크는 'https://brand.naver.com/tymagic/products/상품번호'의 형식이야.
 
-Question: {question}
+Question: {input}
 Helpful answer in Korean:`;
 
 export const makeChain = async (vectorStore: FaissStore, sessionId: string, userId: string) => {
@@ -92,21 +90,21 @@ export const makeAgentChain = async (vectorStore: FaissStore, sessionId: string,
     // Agent에서 사용될 Tool
     const tool = createRetrieverTool(retriever, {
         name: "search_skmagic_product",
-        description: "Searches and returns documents regarding the SKmagic 제품 정보",
+        description: "질문의 답변을 문서에서 정보를 찾아 답변해줘.",
     });
 
     /// 채팅 내역 요약 및 메모리 처리
-    const memory = new ConversationSummaryMemory(
+    const memory = new OpenAIAgentTokenBufferMemory(
         {
-            memoryKey: "chat_history",
             llm: model,
+            memoryKey: "chat_history",
+            outputKey: "output",
             chatHistory: firestoreHistory,
         });
 
 
     const executor = await initializeAgentExecutorWithOptions([tool], model, {
         agentType: "openai-functions",
-        memory,
         returnIntermediateSteps: true,
         agentArgs: {
             prefix:

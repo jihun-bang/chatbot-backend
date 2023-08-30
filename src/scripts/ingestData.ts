@@ -3,15 +3,17 @@ import {OpenAIEmbeddings} from 'langchain/embeddings/openai';
 import {PDFLoader} from 'langchain/document_loaders/fs/pdf';
 import {DirectoryLoader} from 'langchain/document_loaders/fs/directory';
 import {FaissStore} from "langchain/vectorstores/faiss";
+import { CSVLoader } from 'langchain/document_loaders';
 
 const filePath = 'docs';
 
 export const run = async () => {
     try {
         console.log('split docs...');
-        // PDF Load
+        // 파일 Load
         const directoryLoader = new DirectoryLoader(filePath, {
             '.pdf': (path) => new PDFLoader(path),
+            '.csv': (path) => new CSVLoader(path),
         });
         const rawDocs = await directoryLoader.load();
 
@@ -21,7 +23,7 @@ export const run = async () => {
             chunkOverlap: 200,
         });
 
-        // PDF -> Docs
+        // 파일 -> Docs
         const docs = await textSplitter.splitDocuments(rawDocs);
         console.log('creating vector store...');
 
