@@ -5,7 +5,7 @@ import {ConversationalRetrievalQAChain} from "langchain/chains";
 import dotenv from "dotenv"
 import {FaissStore} from "langchain/vectorstores/faiss";
 import {OpenAIEmbeddings} from "langchain/embeddings/openai";
-import {makeChain} from "./chain.js";
+import {makeAgentChain, makeChain} from "./chain.js";
 
 let loadedVectorStore: FaissStore;
 const directory = "db";
@@ -40,6 +40,30 @@ app.post('/api/chat', async (req, res) => {
         }
         const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
         console.log(`[question] ${question}`)
+        const chain = await makeAgentChain(loadedVectorStore, session_id, user_id);
+        const response = await chain.call({question: sanitizedQuestion});
+        console.log('[response]', response);
+        res.status(200).json(response);
+    } catch (e) {
+        res.status(400).json({
+            message: '잘못된 형식으로 요청하였습니다.',
+            error: `${e}`
+        });
+    }
+});
+
+app.post('/api/agent', async (req, res) => {
+    try {
+        const {question, session_id, user_id} = req.body;
+        if (!question) {
+            res.status(400).json({message: '질문 해주세요!'});
+            return
+        } else if (!session_id || !user_id) {
+            res.status(400).json({message: '잘못된 형식으로 요청하였습니다.'});
+            return
+        }
+        const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
+        console.log(`[question] ${question}`)
         const chain = await makeChain(loadedVectorStore, session_id, user_id);
         const response = await chain.call({question: sanitizedQuestion});
         console.log('[response]', response);
@@ -51,6 +75,7 @@ app.post('/api/chat', async (req, res) => {
         });
     }
 });
+
 
 app.listen(port, async () => {
     loadedVectorStore = await FaissStore.load(
