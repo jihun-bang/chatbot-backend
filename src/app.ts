@@ -1,13 +1,11 @@
 import express from 'express';
 import * as serviceAccount from "./service_account_key.json" assert {type: 'json'};
 import admin from "firebase-admin";
-import {ConversationalRetrievalQAChain} from "langchain/chains";
 import dotenv from "dotenv"
 import {FaissStore} from "langchain/vectorstores/faiss";
 import {OpenAIEmbeddings} from "langchain/embeddings/openai";
 import {makeAgentChain, makeChain} from "./chain.js";
 
-let loadedVectorStore: FaissStore;
 const directory = "db";
 const port = 8080;
 
@@ -23,6 +21,14 @@ admin.initializeApp({
         privateKey: serviceAccount.default.private_key,
     }),
 });
+app.use(function(_, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET,PUT,PATCH,POST,DELETE");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+  });
+
+let loadedVectorStore = await FaissStore.load(directory, new OpenAIEmbeddings());
 
 app.get('/', (_, res) => {
     res.send('Typescript + Node.js + Express Server');
@@ -40,7 +46,7 @@ app.post('/api/chat', async (req, res) => {
         }
         const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
         console.log(`[question] ${question}`)
-        const chain = await makeChain(loadedVectorStore, session_id, user_id);
+        const chain = await makeChain(loadedVectorStore.asRetriever(), session_id, user_id);
         const response = await chain.call({question: sanitizedQuestion});
         console.log('[response]', response);
         res.status(200).json(response);
@@ -53,41 +59,28 @@ app.post('/api/chat', async (req, res) => {
 });
 
 app.post('/api/agent', async (req, res) => {
-    const {question, session_id, user_id} = req.body;
-    if (!question) {
-        res.status(400).json({message: '질문 해주세요!'});
-        return
-    } else if (!session_id || !user_id) {
-        res.status(400).json({message: '잘못된 형식으로 요청하였습니다.'});
-        return
+    try {
+        const {question, session_id, user_id} = req.body;
+        if (!question) {
+            res.status(400).json({message: '질문 해주세요!'});
+            return
+        } else if (!session_id || !user_id) {
+            res.status(400).json({message: '잘못된 형식으로 요청하였습니다.'});
+            return
+        }
+        const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
+        console.log(`[question] ${question}`)
+        const chain = await makeAgentChain(loadedVectorStore.asRetriever(), session_id, user_id);
+        const response = await chain.call({input: sanitizedQuestion});
+        console.log('[response]', response);
+        res.status(200).json(response);
+    } catch (e) {
+        console.log(e);
+        res.status(400).json({
+            message: '잘못된 형식으로 요청하였습니다.',
+            error: `${e}`
+        });
     }
-    const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
-    console.log(`[question] ${question}`)
-    const chain = await makeAgentChain(loadedVectorStore, session_id, user_id);
-    const response = await chain.call({input: sanitizedQuestion});
-    console.log('[response]', response);
-    res.status(200).json(response);
-    // try {
-    //     const {question, session_id, user_id} = req.body;
-    //     if (!question) {
-    //         res.status(400).json({message: '질문 해주세요!'});
-    //         return
-    //     } else if (!session_id || !user_id) {
-    //         res.status(400).json({message: '잘못된 형식으로 요청하였습니다.'});
-    //         return
-    //     }
-    //     const sanitizedQuestion = question.trim().replaceAll('\n', ' ');
-    //     console.log(`[question] ${question}`)
-    //     const chain = await makeAgentChain(loadedVectorStore, session_id, user_id);
-    //     const response = await chain.call({input: sanitizedQuestion});
-    //     console.log('[response]', response);
-    //     res.status(200).json(response);
-    // } catch (e) {
-    //     res.status(400).json({
-    //         message: '잘못된 형식으로 요청하였습니다.',
-    //         error: `${e}`
-    //     });
-    // }
 });
 
 
