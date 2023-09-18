@@ -1,9 +1,9 @@
-import {RecursiveCharacterTextSplitter} from 'langchain/text_splitter';
-import {OpenAIEmbeddings} from 'langchain/embeddings/openai';
-import {PDFLoader} from 'langchain/document_loaders/fs/pdf';
-import {DirectoryLoader} from 'langchain/document_loaders/fs/directory';
-import {FaissStore} from "langchain/vectorstores/faiss";
-import { CSVLoader } from 'langchain/document_loaders';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
+import { DirectoryLoader } from 'langchain/document_loaders/fs/directory';
+import { FaissStore } from "langchain/vectorstores/faiss";
+import { CSVLoader } from "langchain/document_loaders/fs/csv";
 
 const filePath = 'docs';
 
@@ -29,7 +29,7 @@ export const run = async () => {
 
         // 텍스트 임베딩 및 데이터 구조화
         const vectorStore = await FaissStore.fromDocuments(
-            docs,
+            rawDocs,
             new OpenAIEmbeddings()
         );
         await vectorStore.save('db');

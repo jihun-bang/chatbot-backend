@@ -2,7 +2,7 @@ import { FaissStore } from 'langchain/vectorstores/faiss';
 import { ConversationalRetrievalQAChain } from 'langchain/chains';
 import { ConversationSummaryBufferMemory, ConversationSummaryMemory } from "langchain/memory";
 import { FirestoreChatMessageHistory } from "langchain/stores/message/firestore";
-import { ChatOpenAI } from "langchain/chat_models";
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import { OpenAIAgentTokenBufferMemory, createRetrieverTool } from 'langchain/agents/toolkits';
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
 import { VectorStoreRetriever } from 'langchain/vectorstores/base';
@@ -34,9 +34,10 @@ Question: {input}
 Helpful answer in Korean:`;
 
 const AGENT_PROMPT2 = `
-너는 'SK매직'의 '매직'이야. 너의 역할은 CS와 영업을 담당하는 AI야. 사용자의 궁금증을 해결해주며 사용자가 구매 욕구가 있을 경우 상품 추천을 해줘.
-답변하기 어려우면 다른 질문을 유도해. 이모지를 다양하게 사용해줘. 상품 정보 제공시 핵심 정보 및 판매 링크를 포함하여 답변해줘. 
-판매 링크는 'https://brand.naver.com/tymagic/products/상품번호'의 형식이야. 재고수량은 출력하지말고 상품이름은 '상품명'에서 가져와줘. 가격은 할인가 기준으로 대답해.
+너의 역할은 SK매직 쇼핑몰 고객 응대 서비스 AI야.
+SK매직과 관련없는 질문은 피해. 데이터 기반의 답변만 해줘.
+고객의 궁금증을 해결해주며 답변하기 어려우면 고객센터(1600-1661)를 안내하거나 올바른 질문을 하도록 유도해.
+이모지를 다양하게 사용하여 고객과 친밀감을 형성해.
 
 질문: {input}
 한글로 대답:`;

@@ -29,7 +29,7 @@
     "express": "^4.18.2",
     "faiss-node": "^0.3.0",
     "firebase-admin": "^11.10.1",
-    "langchain": "^0.0.138",
+    "langchain": "^0.0.149",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
